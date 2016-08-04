@@ -3,33 +3,16 @@
 /**
  * This file is part of the Nextras community extensions of Nette Framework
  *
- * @license    MIT
- * @link       https://github.com/nextras
- * @author     Jan Skrasek
+ * @license MIT
+ * @author Jan Skrasek
+ * @author Adam Bisek <adam.bisek@gmail.com>
  */
-
-namespace Nextras\Application\UI;
+namespace AdamBisek;
 
 use Nette;
 
-
 trait SecuredLinksControlTrait
 {
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function link($destination, $args = array())
-	{
-		if (!is_array($args)) {
-			$args = func_get_args();
-			array_shift($args);
-		}
-
-		$link = parent::link($destination, $args);
-		return $this->getPresenter()->createSecuredLink($this, $link, $destination);
-	}
-
 
 	/**
 	 * For @secured annotated signal handler methods checks if URL parameters has not been changed
@@ -58,9 +41,8 @@ trait SecuredLinksControlTrait
 						}
 					}
 				}
-
 				if (!isset($this->params['_sec']) || $this->params['_sec'] !== $this->getPresenter()->getCsrfToken(get_class($this), $method, $params)) {
-					throw new Nette\Application\UI\BadSignalException("Invalid security token for signal '$signal' in class {$this->reflection->name}.");
+					throw new Nette\Application\UI\BadSignalException("Invalid security token for signal '$signal' in class " . get_class($this) . ".");
 				}
 			}
 		}
@@ -68,7 +50,7 @@ trait SecuredLinksControlTrait
 		parent::signalReceived($signal);
 
 		if ($secured && !$this->getPresenter()->isAjax()) {
-			throw new \LogicException("Secured signal '$signal' did not redirect. Possible csrf-token reveal by http referer header.");
+			throw new \LogicException("Secured signal '$signal' did not redirect. Possible csrf-token reveal by http referer header. Please redirect in $method().");
 		}
 	}
 

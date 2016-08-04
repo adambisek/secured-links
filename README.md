@@ -1,20 +1,20 @@
 ## Nextras\SecuredLinks
 
-[![Build Status](https://travis-ci.org/nextras/secured-links.svg?branch=master)](https://travis-ci.org/nextras/secured-links)
-[![Downloads this Month](https://img.shields.io/packagist/dm/nextras/secured-links.svg?style=flat)](https://packagist.org/packages/nextras/secured-links)
-[![Stable version](http://img.shields.io/packagist/v/nextras/secured-links.svg?style=flat)](https://packagist.org/packages/nextras/secured-links)
-[![HHVM Status](http://img.shields.io/hhvm/nextras/secured-links.svg?style=flat)](http://hhvm.h4cc.de/package/nextras/secured-links)
-
+[![Build Status](https://travis-ci.org/adambisek/secured-links.svg?branch=master)](https://travis-ci.org/adambisek/secured-links)
+[![Coverage Status](https://coveralls.io/repos/github/adambisek/secured-links/badge.svg?branch=master)](https://coveralls.io/github/adambisek/secured-links?branch=master)
+[![Stable version](http://img.shields.io/packagist/v/adambisek/secured-links.svg?style=flat)](https://packagist.org/packages/adambisek/secured-links)
 
 **SecuredLinksTrait** creates secured signal links.
 **PHP 5.4+ ONLY**
+
+forked from nextras/secured-links
 
 ## Installation
 
 The best way to install is using [Composer](http://getcomposer.org/):
 
 ```sh
-$ composer require nextras/secured-links
+$ composer require adambisek/secured-links
 ```
 
 ## Usage of SecuredLinksTrait

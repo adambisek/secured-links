@@ -1,3 +1,5 @@
 /composer.lock
 /vendor
-output
+/tests/report.html
+/tests/report.xml
+/tests/cases/output

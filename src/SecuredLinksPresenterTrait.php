@@ -3,105 +3,56 @@
 /**
  * This file is part of the Nextras community extensions of Nette Framework
  *
- * @license    MIT
- * @link       https://github.com/nextras
- * @author     Jan Skrasek
+ * @license MIT
+ * @author Jan Skrasek
+ * @author Adam Bisek <adam.bisek@gmail.com>
  */
-
-namespace Nextras\Application\UI;
+namespace AdamBisek;
 
 use Nette;
-use Nette\Application\UI\PresenterComponent;
-
 
 trait SecuredLinksPresenterTrait
 {
+
 	use SecuredLinksControlTrait;
 
-
 	/**
-	 * @param  PresenterComponent $component
-	 * @param  string $link created URL
-	 * @param  string $destination
-	 * @return string
-	 * @throws Nette\Application\UI\InvalidLinkException
+	 * Request/URL factory.
+	 * @param  Component  base
+	 * @param  string   destination in format "[//] [[[module:]presenter:]action | signal! | this] [#fragment]"
+	 * @param  array    array of arguments
+	 * @param  string   forward|redirect|link
+	 * @return string   URL
+	 * @throws InvalidLinkException
+	 * @internal
 	 */
-	public function createSecuredLink(PresenterComponent $component, $link, $destination)
+	protected function createRequest($component, $destination, array $args, $mode)
 	{
-		/** @var $lastRequest Nette\Application\Request */
-		$lastRequest = $this->getLastCreatedRequest();
-
-		do {
-			if ($lastRequest === NULL) {
-				break;
-			}
-
-			$params = $lastRequest->getParameters();
-			if (!isset($params[Nette\Application\UI\Presenter::SIGNAL_KEY])) {
-				break;
-			}
-
-			if (($pos = strpos($destination, '#')) !== FALSE) {
-				$destination = substr($destination, 0, $pos);
-			}
-
-			$a = strpos($destination, '//');
-			if ($a !== FALSE) {
-				$destination = substr($destination, $a + 2);
-			}
-
+		if (!$component instanceof self || substr($destination, -1) === '!') {
+			// check if signal must be secured
 			$signal = strtr(rtrim($destination, '!'), ':', '-');
-			$a = strrpos($signal, '-');
-			if ($a !== FALSE) {
-				if ($component instanceof Nette\Application\UI\Presenter && substr($destination, -1) !== '!') {
-					break;
-				}
-
-				$component = $component->getComponent(substr($signal, 0, $a));
-				$signal = (string) substr($signal, $a + 1);
-			}
-
-			if ($signal == NULL) { // intentionally ==
-				throw new Nette\Application\UI\InvalidLinkException('Signal must be non-empty string.');
-			}
-
-			// only PresenterComponent
-			if (!$component instanceof PresenterComponent) {
-				break;
-			}
-
-			$reflection = $component->getReflection();
 			$method = $component->formatSignalMethod($signal);
-			$signalReflection = $reflection->getMethod($method);
-
-			if (!$signalReflection->hasAnnotation('secured')) {
-				break;
+			$signalMethodReflection = new Nette\Reflection\Method($component, $method);
+			if (!$signalMethodReflection->hasAnnotation('secured')) {
+				goto parent;
 			}
-
-			$origParams = $lastRequest->getParameters();
+			// gather args, create hash and append to args
+			$namedArgs = $args;
+			self::argsToParams($this, $method, $namedArgs); // convert indexed args to named args
 			$protectedParams = array($component->getUniqueId());
-			foreach ($signalReflection->getParameters() as $param) {
+			foreach ($signalMethodReflection->getParameters() as $param) {
 				if ($param->isOptional()) {
 					continue;
 				}
-				if (isset($origParams[$component->getParameterId($param->name)])) {
-					$protectedParams[$param->name] = $origParams[$component->getParameterId($param->name)];
+				if (isset($namedArgs[$component->getParameterId($param->name)])) {
+					$protectedParams[$param->name] = $namedArgs[$component->getParameterId($param->name)];
 				}
 			}
+			$args['_sec'] = $this->getCsrfToken(get_class($component), $method, $protectedParams);
+		}
 
-			$protectedParam = $this->getCsrfToken(get_class($component), $method, $protectedParams);
-
-			if (($pos = strpos($link, '#')) === FALSE) {
-				$fragment = '';
-			} else {
-				$fragment = substr($link, $pos);
-				$link = substr($link, 0, $pos);
-			}
-
-			$link .= (strpos($link, '?') !== FALSE ? '&' : '?') . $component->getParameterId('_sec') . '=' . $protectedParam . $fragment;
-		} while (FALSE);
-
-		return $link;
+		parent:
+		return parent::createRequest($component, $destination, $args, $mode);
 	}
 
 
